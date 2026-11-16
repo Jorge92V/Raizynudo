@@ -5,7 +5,7 @@ const order={folio:'RN-TEST',customer:{name:'<script>bad</script>',phone:'551234
 test('aviso incluye cliente, diseño, anticipo, destino y envío pendiente; escapa HTML',()=>{
  const m=message(order);assert.ok(m.text.includes('30%'));assert.ok(m.text.includes('nogal / parota'));assert.ok(m.text.includes('Por cotizar'));assert.ok(m.text.includes('7 días naturales'));
  assert.ok(!m.html.includes('<script>'));assert.ok(m.html.includes('&lt;script&gt;'));
- assert.equal(RECIPIENT,'Mike.valleg4@gmail.com');
+ assert.equal(RECIPIENT,'mike.valleg4@gmail.com');
 });
 test('sin configuración deja el aviso pendiente sin consultar o enviar',async()=>{
  const result=await deliverNotification({query(){throw Error('No query')}},'id',{env:{},fetcher(){throw Error('No send')}});
