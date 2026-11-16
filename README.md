@@ -99,7 +99,7 @@ Después hacer un nuevo deploy. Si falta la configuración de administración, e
 
 ### Servicio de correo
 
-Proveedor preparado: **Resend**. Crear cuenta en `https://resend.com`, verificar el dominio remitente según los registros DNS que indique Resend y crear una API key de envío. Configurar `MAIL_FROM` con una dirección de ese dominio. El destinatario fijo es **Miguel.valleg@hotmail.com** y se define solo en el servidor. El modo de pruebas de Resend restringe destinatarios; verificar el remitente para el envío normal.
+Proveedor preparado: **Resend**. Crear cuenta en `https://resend.com`, verificar el dominio remitente según los registros DNS que indique Resend y crear una API key de envío. Configurar `MAIL_FROM` con una dirección de ese dominio. El destinatario fijo es **Mike.valleg4@gmail.com** y se define solo en el servidor. El modo de pruebas de Resend restringe destinatarios; verificar el remitente para el envío normal.
 
 Cada confirmación guarda el pedido y su aviso pendiente en la misma sentencia SQL. Solo después del guardado se intenta enviar. El aviso contiene folio, datos del cliente, dimensiones, distribución exacta, extras, grabado, destino, importe y anticipo. La imagen del grabado se consulta y descarga desde el admin; no se adjunta al correo.
 
@@ -118,6 +118,6 @@ Prueba de integración: `node --env-file=.env scripts/smoke-admin.mjs`. Usa un p
 
 ### Remitente gratuito acordado
 
-Si `MAIL_FROM` está vacío, se utiliza `Raíz & Nudo <onboarding@resend.dev>`. Este modo gratuito de pruebas de Resend solo envía al correo propietario de la cuenta: debe ser `Miguel.valleg@hotmail.com`, que permanece como destinatario fijo. Para otros destinatarios se necesita un dominio remitente verificado. `MAIL_FROM` permite reemplazar el remitente sin cambiar código.
+Si `MAIL_FROM` está vacío, se utiliza `Raíz & Nudo <onboarding@resend.dev>`. Este modo gratuito de pruebas de Resend solo envía al correo propietario de la cuenta: debe ser `Mike.valleg4@gmail.com`, que permanece como destinatario fijo. Para otros destinatarios se necesita un dominio remitente verificado. `MAIL_FROM` permite reemplazar el remitente sin cambiar código.
 
 `/version.json` identifica el commit publicado para comprobar si Netlify desplegó la versión más reciente. `ADMIN_SESSION_SECRET` debe configurarse como secreto en Netlify, nunca en el repositorio.

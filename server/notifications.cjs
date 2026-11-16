@@ -1,4 +1,4 @@
-const RECIPIENT = 'Miguel.valleg@hotmail.com';
+const RECIPIENT = 'Mike.valleg4@gmail.com';
 const DEFAULT_SENDER = 'Raíz & Nudo <onboarding@resend.dev>';
 const mailConfigured = env => Boolean(env.RESEND_API_KEY);
 const mailFrom = env => env.MAIL_FROM || DEFAULT_SENDER;
