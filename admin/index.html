@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Administración · Raíz & Nudo</title>
+<link rel="stylesheet" href="/assets/admin.css"><script src="/assets/admin.js" defer></script>
+</head>
+<body>
+<header><a class="brand" href="/">RAÍZ <i>&</i> NUDO<small>ADMINISTRACIÓN DEL TALLER</small></a><button id="logout" hidden>Cerrar sesión</button></header>
+<main>
+<section id="login-view" class="login card"><div class="eyebrow">ACCESO PRIVADO</div><h1>Tu taller, en orden.</h1><p>Consulta solicitudes y acompaña cada pieza hasta su entrega.</p><form id="login-form"><label for="password">Contraseña de administración</label><input id="password" type="password" autocomplete="current-password" required maxlength="256"><button class="primary" type="submit">Entrar al taller →</button></form><p id="login-message" class="notice" role="status"></p></section>
+<section id="dashboard" hidden>
+<div class="heading"><div><div class="eyebrow">PEDIDOS REALES · NEON</div><h1>Historias en proceso.</h1><p>Elige un pedido para revisar su diseño, registrar el anticipo y actualizar su estado.</p></div><button id="refresh">Actualizar ↻</button></div>
+<form id="filters" class="filters"><div><label for="search">Buscar pedido</label><input id="search" type="search" placeholder="Folio, nombre o teléfono" maxlength="100"></div><div><label for="status">Estado</label><select id="status"><option value="">Todos los estados</option></select></div><button class="primary" type="submit">Buscar</button></form>
+<p id="message" class="notice" role="status"></p>
+<div class="card table-wrap"><table><thead><tr><th>Pedido / fecha</th><th>Cliente</th><th>Producto</th><th>Estado</th><th>Correo</th></tr></thead><tbody id="rows"></tbody></table><p id="empty" hidden>No hay pedidos con estos filtros.</p></div>
+<div class="pagination"><button id="previous">← Anterior</button><span id="page-label"></span><button id="following">Siguiente →</button></div>
+</section>
+</main>
+<dialog id="detail"><div class="dialog-top"><span class="eyebrow">DETALLE DEL PEDIDO</span><button id="close-detail" aria-label="Cerrar detalle">Cerrar ×</button></div><div id="detail-body"></div><p id="detail-message" class="notice" role="status"></p></dialog>
+<footer>Raíz & Nudo · Acceso protegido · Anticipo 30% · Fabricación 7 días naturales</footer>
+</body>
+</html>

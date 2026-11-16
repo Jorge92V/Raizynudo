@@ -29,3 +29,9 @@ test('no guarda precios alterados y no filtra fallos de la BD',async()=>{
  assert.equal((await handler({httpMethod:'GET'})).statusCode,405);
  assert.equal((await handler({httpMethod:'POST',body:'{bad'})).statusCode,400);
 });
+
+test('el fallo del correo no impide confirmar un pedido guardado',async()=>{
+ const p=payload();p.expectedAmountCents=validate(p).productCents;
+ const handler=createHandler(()=>({query:async(q,args)=>[{id:args[0],folio:'RN-TEST',fingerprint:args[2],product_cents:p.expectedAmountCents,deposit_cents:Math.round(p.expectedAmountCents*.3),shipping_cents:null,status:'Recibido'}]}),async()=>{throw Error('mail unavailable')});
+ const response=await handler(event(p));assert.equal(response.statusCode,200);assert.equal(JSON.parse(response.body).folio,'RN-TEST');
+});

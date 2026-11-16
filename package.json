@@ -4,7 +4,7 @@
   "private": true,
   "description": "Configurador y flujo de pedidos de Raíz & Nudo",
   "scripts": {
-    "check": "node --check assets/configurator.js && node --check assets/flow.js && node --check assets/business.js && node --check assets/storage.js",
+    "check": "node --check assets/configurator.js && node --check assets/flow.js && node --check assets/business.js && node --check assets/storage.js && node --check assets/admin.js && node --check server/admin.cjs && node --check server/notifications.cjs && node --check netlify/functions/admin.js",
     "test": "node --test tests/*.test.cjs",
     "dev": "python3 -m http.server 5173 --bind 127.0.0.1",
     "build": "node scripts/build.mjs",

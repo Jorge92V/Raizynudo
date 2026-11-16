@@ -64,7 +64,7 @@ Si la configuración del servidor no tiene `DATABASE_URL`, el sitio permanece cl
 - `GET /api/config`: indica si está habilitada la recepción en servidor.
 - `POST /api/orders`: valida datos y diseño, recalcula, guarda y devuelve folio/importes. Necesita `requestKey` UUID y el precio revisado `expectedAmountCents`. Un reintento con la misma clave y contenido devuelve el mismo folio; con contenido distinto devuelve 409. El primer registro y su evento se guardan en una sola sentencia atómica.
 
-No hay endpoints públicos para listar pedidos, consultar datos personales o modificar pagos. La vista del taller conserva copias de este dispositivo; los cambios simulados solo están disponibles para pedidos de demo. **El panel administrativo conectado y autenticado, el registro real de anticipos y las notificaciones siguen pendientes**. El plazo solo comenzará cuando se registre un anticipo verificado; la API actual únicamente recibe pedidos en estado `Recibido`.
+No hay endpoints públicos para listar pedidos, consultar datos personales o modificar pagos. La vista del taller conserva copias de este dispositivo; los cambios simulados solo están disponibles para pedidos de demo. El panel administrativo conectado y el registro manual de anticipos están en `/admin`, con acceso protegido. La API pública únicamente recibe pedidos en estado `Recibido`; solo el administrador puede registrar un anticipo recibido e iniciar el plazo.
 
 ## Estructura
 
@@ -78,3 +78,39 @@ No hay endpoints públicos para listar pedidos, consultar datos personales o mod
 - `tests/`: reglas de negocio, persistencia y validación de API.
 
 Prueba opcional real: `node --env-file=.env scripts/smoke-db.mjs`. Crea un pedido ficticio, verifica cálculo, anticipo e idempotencia y elimina exclusivamente su registro temporal. Se ejecutó correctamente contra Neon. En entornos que requieran un proxy para Node, usar `NODE_USE_ENV_PROXY=1` (Node 24).
+
+
+## Admin privado y avisos de pedidos
+
+La ruta `/admin` no aparece en la navegación pública y lleva `noindex`. La protección real está en la API: sesión firmada en cookie `HttpOnly`, `Secure` y `SameSite=Strict`, con duración de 8 horas. Las contraseñas no se guardan en el navegador. Se limita el login a 10 intentos por IP en 15 minutos y se validan el origen y la cabecera de las operaciones de escritura.
+
+Configurar en **Netlify → Project configuration → Environment variables**, con alcance de Functions:
+
+| Variable | Valor |
+| --- | --- |
+| `DATABASE_URL` | Conexión pooled existente de Neon. |
+| `ADMIN_PASSWORD` | Contraseña elegida para el taller, mínimo 16 caracteres. |
+| `ADMIN_SESSION_SECRET` | Secreto aleatorio distinto de la contraseña, mínimo 32 caracteres. Generar con `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. |
+| `BUSINESS_TIME_ZONE` | Opcional; por defecto `America/Mexico_City`. |
+| `RESEND_API_KEY` | API key de envío de Resend. |
+| `MAIL_FROM` | Remitente autorizado en Resend, por ejemplo `Raíz & Nudo <pedidos@dominio-verificado.com>`. |
+
+Después hacer un nuevo deploy. Si falta la configuración de administración, el acceso permanece bloqueado. Rotar la contraseña o el secreto invalida todas las sesiones existentes. No es necesario modificar HTML o JS para cambiar estas variables. No introducir secretos en variables públicas ni subirlos al repositorio.
+
+### Servicio de correo
+
+Proveedor preparado: **Resend**. Crear cuenta en `https://resend.com`, verificar el dominio remitente según los registros DNS que indique Resend y crear una API key de envío. Configurar `MAIL_FROM` con una dirección de ese dominio. El destinatario fijo es **Miguel.valleg@hotmail.com** y se define solo en el servidor. El modo de pruebas de Resend restringe destinatarios; verificar el remitente para el envío normal.
+
+Cada confirmación guarda el pedido y su aviso pendiente en la misma sentencia SQL. Solo después del guardado se intenta enviar. El aviso contiene folio, datos del cliente, dimensiones, distribución exacta, extras, grabado, destino, importe y anticipo. La imagen del grabado se consulta y descarga desde el admin; no se adjunta al correo.
+
+Si no están configurados Resend o el remitente, el aviso queda pendiente. Si el servicio falla, se conserva el pedido y se registra el error genérico. Los reintentos normales de confirmación y el botón **Reintentar aviso** del admin vuelven a procesar la cola; **todavía no hay un cron de reintentos automáticos**. El envío usa una clave de idempotencia estable y un bloqueo temporal para evitar concurrencia. Máximo 10 intentos por aviso. El estado `sent` significa aceptado por Resend, no entrega confirmada en la bandeja del destinatario; no hay webhook de rebotes/entrega en esta versión.
+
+### Operación del taller
+
+El admin permite buscar por folio, nombre o teléfono; filtrar por estado; navegar resultados de 25 en 25; abrir el diseño, datos y grabado; consultar historial; registrar manualmente el anticipo real del 30%; y actualizar estados. El pago no se cobra ni se verifica con una pasarela: el administrador confirma que ya lo recibió.
+
+La primera confirmación del anticipo fija la fecha de fabricación a 7 días naturales, con la zona horaria del taller. No se permite repetirla ni pasar a Confirmado/Producción/Listo/Enviado/Entregado sin anticipo. Las actualizaciones incluyen una revisión para impedir que dos ventanas sobrescriban cambios sin aviso. Estado e historial se guardan de forma atómica.
+
+Migración añadida: `002_admin_notifications.sql`. Crea cola de correos, control de intentos de acceso y revisión del pedido. Las imágenes grandes solo se consultan al abrir un detalle, no al listar pedidos. No se envían avisos antiguos automáticamente al aplicar la migración.
+
+Prueba de integración: `node --env-file=.env scripts/smoke-admin.mjs`. Usa un pedido temporal y credenciales efímeras, verifica login, acceso protegido, cambios, conflictos de revisión, anticipo y cola, y elimina su registro de prueba. Simula la respuesta de Resend: **no envía correos reales**. Para probar la entrega real hace falta configurar el remitente y la API key.

@@ -45,7 +45,7 @@ function validate(input) {
  return {requestKey:input.requestKey,client,delivery,design,productCents,depositCents,pricing};
 }
 function response(statusCode,body) {return {statusCode,headers:{'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify(body)};}
-function createHandler(getSql) { return async event=>{
+function createHandler(getSql, notify = async () => {}) { return async event=>{
  if(event.httpMethod!=='POST')return {...response(405,{error:'Método no permitido'}),headers:{Allow:'POST','Content-Type':'application/json'}};
  if(Buffer.byteLength(event.body||'')>2300000)return response(413,{error:'Pedido demasiado grande'});
  try {
@@ -63,10 +63,14 @@ function createHandler(getSql) { return async event=>{
   ), event AS (
    INSERT INTO raiz_nudo.order_events(order_id,status)
    SELECT id,'Recibido' FROM saved WHERE id=$1 RETURNING id
-  ) SELECT folio,created_at,fingerprint,product_cents,deposit_cents,shipping_cents,status FROM saved`,
+  ), notification AS (
+   INSERT INTO raiz_nudo.email_notifications(order_id) SELECT id FROM saved
+   ON CONFLICT (order_id) DO NOTHING RETURNING order_id
+  ) SELECT id,folio,created_at,fingerprint,product_cents,deposit_cents,shipping_cents,status FROM saved`,
   [id,o.requestKey,fingerprint,folio,JSON.stringify(o.client),JSON.stringify(o.delivery),JSON.stringify(o.design),JSON.stringify(o.pricing),o.productCents,o.depositCents,o.delivery.method==='shipping'?null:0]);
   const saved=rows[0];
   if(saved.fingerprint!==fingerprint)return response(409,{error:'Esta confirmación ya fue utilizada con otro diseño. Recarga e inténtalo de nuevo.'});
+  try { await notify(sql,saved.id); } catch { console.error('notification_pending'); }
   return response(200,{folio:saved.folio,created:saved.created_at,amount:saved.product_cents/100,depositAmount:saved.deposit_cents/100,shippingCost:saved.shipping_cents===null?null:saved.shipping_cents/100,status:saved.status,productionDays:7});
  }catch(e){if(e instanceof InputError)return response(400,{error:e.message});console.error('orders_failed',e.code||e.name);return response(503,{error:'No se pudo guardar el pedido. Conserva tu diseño e inténtalo de nuevo.'})}
 };}
