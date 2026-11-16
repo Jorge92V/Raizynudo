@@ -1,4 +1,7 @@
 const RECIPIENT = 'Miguel.valleg@hotmail.com';
+const DEFAULT_SENDER = 'Raíz & Nudo <onboarding@resend.dev>';
+const mailConfigured = env => Boolean(env.RESEND_API_KEY);
+const mailFrom = env => env.MAIL_FROM || DEFAULT_SENDER;
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = cents => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(cents/100);
 function message(order) {
@@ -22,7 +25,7 @@ function message(order) {
 }
 async function deliverNotification(sql,orderId,{env=process.env,fetcher=fetch}={}) {
  // No email credentials: leave the durable queue untouched for later retry.
- if(!env.RESEND_API_KEY||!env.MAIL_FROM)return {state:'pending',configured:false};
+ if(!mailConfigured(env))return {state:'pending',configured:false};
  const claimed=await sql.query(`UPDATE raiz_nudo.email_notifications SET state='sending',attempts=attempts+1,lease_until=now()+interval '90 seconds'
   WHERE order_id=$1 AND attempts<10 AND ((state IN ('pending','failed') AND next_attempt_at<=now()) OR (state='sending' AND lease_until<now())) RETURNING order_id`,[orderId]);
  if(!claimed.length)return {state:'unchanged'};
@@ -32,7 +35,7 @@ async function deliverNotification(sql,orderId,{env=process.env,fetcher=fetch}={
   const result=await fetcher('https://api.resend.com/emails',{
    method:'POST',signal:AbortSignal.timeout(8000),
    headers:{Authorization:`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':`raiz-order-${orderId}`},
-   body:JSON.stringify({from:env.MAIL_FROM,to:[RECIPIENT],...message(order)})
+   body:JSON.stringify({from:mailFrom(env),to:[RECIPIENT],...message(order)})
   });
   if(!result.ok)throw Error(`provider_http_${result.status}`);
   const data=await result.json();
@@ -45,4 +48,4 @@ async function deliverNotification(sql,orderId,{env=process.env,fetcher=fetch}={
   return {state:'failed'};
  }
 }
-module.exports={RECIPIENT,message,deliverNotification};
+module.exports={RECIPIENT,DEFAULT_SENDER,mailConfigured,message,deliverNotification};

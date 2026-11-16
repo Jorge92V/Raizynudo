@@ -103,7 +103,7 @@ Proveedor preparado: **Resend**. Crear cuenta en `https://resend.com`, verificar
 
 Cada confirmación guarda el pedido y su aviso pendiente en la misma sentencia SQL. Solo después del guardado se intenta enviar. El aviso contiene folio, datos del cliente, dimensiones, distribución exacta, extras, grabado, destino, importe y anticipo. La imagen del grabado se consulta y descarga desde el admin; no se adjunta al correo.
 
-Si no están configurados Resend o el remitente, el aviso queda pendiente. Si el servicio falla, se conserva el pedido y se registra el error genérico. Los reintentos normales de confirmación y el botón **Reintentar aviso** del admin vuelven a procesar la cola; **todavía no hay un cron de reintentos automáticos**. El envío usa una clave de idempotencia estable y un bloqueo temporal para evitar concurrencia. Máximo 10 intentos por aviso. El estado `sent` significa aceptado por Resend, no entrega confirmada en la bandeja del destinatario; no hay webhook de rebotes/entrega en esta versión.
+Si no está configurada la clave de Resend, el aviso queda pendiente. Si el servicio falla, se conserva el pedido y se registra el error genérico. Los reintentos normales de confirmación y el botón **Reintentar aviso** del admin vuelven a procesar la cola; **todavía no hay un cron de reintentos automáticos**. El envío usa una clave de idempotencia estable y un bloqueo temporal para evitar concurrencia. Máximo 10 intentos por aviso. El estado `sent` significa aceptado por Resend, no entrega confirmada en la bandeja del destinatario; no hay webhook de rebotes/entrega en esta versión.
 
 ### Operación del taller
 
@@ -114,3 +114,10 @@ La primera confirmación del anticipo fija la fecha de fabricación a 7 días na
 Migración añadida: `002_admin_notifications.sql`. Crea cola de correos, control de intentos de acceso y revisión del pedido. Las imágenes grandes solo se consultan al abrir un detalle, no al listar pedidos. No se envían avisos antiguos automáticamente al aplicar la migración.
 
 Prueba de integración: `node --env-file=.env scripts/smoke-admin.mjs`. Usa un pedido temporal y credenciales efímeras, verifica login, acceso protegido, cambios, conflictos de revisión, anticipo y cola, y elimina su registro de prueba. Simula la respuesta de Resend: **no envía correos reales**. Para probar la entrega real hace falta configurar el remitente y la API key.
+
+
+### Remitente gratuito acordado
+
+Si `MAIL_FROM` está vacío, se utiliza `Raíz & Nudo <onboarding@resend.dev>`. Este modo gratuito de pruebas de Resend solo envía al correo propietario de la cuenta: debe ser `Miguel.valleg@hotmail.com`, que permanece como destinatario fijo. Para otros destinatarios se necesita un dominio remitente verificado. `MAIL_FROM` permite reemplazar el remitente sin cambiar código.
+
+`/version.json` identifica el commit publicado para comprobar si Netlify desplegó la versión más reciente. `ADMIN_SESSION_SECRET` debe configurarse como secreto en Netlify, nunca en el repositorio.

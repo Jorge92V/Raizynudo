@@ -1,6 +1,6 @@
 const { createHmac, createHash, timingSafeEqual, randomBytes } = require('node:crypto');
 const { STATUSES } = require('../assets/business.js');
-const { deliverNotification } = require('./notifications.cjs');
+const { deliverNotification, mailConfigured } = require('./notifications.cjs');
 const COOKIE='rn_admin';
 class HttpError extends Error { constructor(status,message){super(message);this.status=status;} }
 const digest=value=>createHash('sha256').update(value).digest();
@@ -71,7 +71,7 @@ function createAdminHandler(getSql,{env=process.env,notify=deliverNotification}=
     FROM raiz_nudo.orders o LEFT JOIN raiz_nudo.email_notifications n ON n.order_id=o.id WHERE o.id=$1`,[id]);
    if(!order)throw new HttpError(404,'Pedido no encontrado');
    const events=await sql.query('SELECT status,created_at FROM raiz_nudo.order_events WHERE order_id=$1 ORDER BY created_at,id',[id]);
-   return result(200,{order,events,mailConfigured:Boolean(env.RESEND_API_KEY&&env.MAIL_FROM)});
+   return result(200,{order,events,mailConfigured:mailConfigured(env)});
   }
   if(['status','deposit'].includes(action)&&event.httpMethod==='POST'){
    const id=uuid(input.id);
@@ -96,7 +96,7 @@ function createAdminHandler(getSql,{env=process.env,notify=deliverNotification}=
    const id=uuid(input.id);
    const [order]=await sql.query('SELECT id FROM raiz_nudo.orders WHERE id=$1',[id]);
    if(!order)throw new HttpError(404,'Pedido no encontrado');
-   if(!env.RESEND_API_KEY||!env.MAIL_FROM)throw new HttpError(503,'Configura RESEND_API_KEY y MAIL_FROM para enviar correos.');
+   if(!mailConfigured(env))throw new HttpError(503,'Configura RESEND_API_KEY para enviar correos.');
    await sql.query(`INSERT INTO raiz_nudo.email_notifications(order_id) VALUES ($1) ON CONFLICT(order_id) DO UPDATE SET next_attempt_at=now()
     WHERE email_notifications.state IN ('pending','failed')`,[id]);
    const delivery=await notify(sql,id,{env});
