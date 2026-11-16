@@ -1,0 +1,11 @@
+{
+  "name": "raiz-y-nudo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configurador y flujo de pedidos de Raíz & Nudo",
+  "scripts": {
+    "check": "node --check assets/configurator.js && node --check assets/flow.js && node --check assets/business.js && node --check assets/storage.js",
+    "test": "node --test tests/*.test.cjs",
+    "dev": "python3 -m http.server 5173 --bind 127.0.0.1"
+  }
+}

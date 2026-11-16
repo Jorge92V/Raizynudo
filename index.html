@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raíz & Nudo · Tu tabla, a tu manera</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<header class="top"><a class="brand" href="./">RAÍZ <i>&</i> NUDO<span>OBJETOS CON ORIGEN</span></a><nav><button onclick="showShop()">Crear mi tabla</button><button onclick="showOrders()">Vista del taller <span id="order-count">0</span></button></nav></header>
+<div class="demo">VERSIÓN DE PRUEBA <span>Recorre el proceso · sin pagos ni pedidos reales</span></div>
+<div id="shop"><section class="hero"><div class="eyebrow">HECHO A MANO. DISEÑADO POR TI.</div><h2>Una tabla con<br>tu propia <em>historia.</em></h2><p>Combina maderas, cuida los detalles y crea una pieza que acompañe tu mesa por años.</p><div class="hero-note">Maderas naturales <b>·</b> Acabado con aceite y cera <b>·</b> Hecho en México</div></section><ol class="steps" id="steps"></ol><div id="wizard"><div id="design" class="app">
+<div class="eyebrow">01 / EL ORIGEN DE TU PIEZA</div><h1>Diseña tu tabla</h1>
+<div class="subtitle">Diseña tu tabla, elige las maderas y obtén el precio al instante</div>
+
+<div class="sec">
+  <div class="sec-label">Tipo de división</div>
+  <div class="mode-row">
+    <div class="mode-btn active" onclick="setMode('v',this)"><div class="mode-icon">𝄀</div><div class="mode-name">Vertical</div><div class="mode-desc">hasta 20 tiras</div></div>
+    <div class="mode-btn" onclick="setMode('h',this)"><div class="mode-icon">☰</div><div class="mode-name">Horizontal</div><div class="mode-desc">hasta 15 tiras</div></div>
+    <div class="mode-btn" onclick="setMode('b',this)"><div class="mode-icon">⊞</div><div class="mode-name">Ambos</div><div class="mode-desc">ajedrez · 2 maderas</div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">Dimensiones finales (cm)</div>
+  <div class="dims-row">
+    <div class="dim-g"><label>Largo</label><input type="number" id="iL" min="15" max="120" value="40" step="1" oninput="onDim()"><div class="dim-hint">15-120 cm</div></div>
+    <div class="dim-g"><label>Ancho</label><input type="number" id="iA" min="15" max="60" value="30" step="1" oninput="onDim()"><div class="dim-hint">15-60 cm</div></div>
+    <div class="dim-g"><label>Grosor</label><input type="number" id="iG" min="1.5" max="4" value="3" step="0.5" oninput="onDim()"><div class="dim-hint">1.5-4 cm</div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-label" id="pal-label">Madera activa</div>
+  <div id="pal-content"></div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">Numero de tiras</div>
+  <div class="tiras-row" id="tiras-row"></div>
+</div>
+
+<div class="board-wrap">
+  <div class="canvas-container">
+    <canvas id="board-canvas"></canvas>
+    <canvas id="engraving-overlay"></canvas>
+  </div>
+  <div class="board-hint" id="board-hint">Haz clic o arrastra para pintar cada seccion</div>
+</div>
+
+<div class="sec">
+  <div class="sec-label">Incluido en todas las tablas</div>
+  <div class="included-box">
+    <div class="included-item">Aceite mineral</div>
+    <div class="included-item">Cera de abeja</div>
+  </div>
+  <div class="sec-label" style="margin-top:10px">Extras opcionales</div>
+  <div class="extras-grid">
+    <div class="ext-card" data-p="30" data-key="canal" onclick="toggleExt(this)"><div class="ext-icon">📏</div><div><div class="ext-name">Canal de jugos</div><div class="ext-price">+ $30</div></div></div>
+    <div class="ext-card" data-p="50" data-key="agarra" id="card-agarra" onclick="toggleExt(this)"><div class="ext-icon">✋</div><div><div class="ext-name">Agarradera</div><div class="ext-price">+ $50</div><div class="lock-note" id="agarra-note" style="display:none">Requiere grosor de 3 cm o mas</div></div></div>
+    <div class="ext-card" data-p="50" data-key="grabado" id="card-grabado" onclick="toggleExt(this)"><div class="ext-icon">✏️</div><div><div class="ext-name">Grabado</div><div class="ext-price">+ $50</div></div></div>
+  </div>
+  <div id="grabado-panel">
+    <div class="grabado-title">Posiciona el grabado en la tabla</div>
+    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept="image/*" onchange="onFileSelect(event)">
+      <div class="upload-label"><strong>Haz clic para subir imagen</strong><br><span style="font-size:10px">PNG, JPG · hasta 1.5 MB</span></div>
+    </div>
+    <div id="img-preview-row" style="display:none" class="img-preview">
+      <img id="img-thumb" class="img-thumb" src="" alt="">
+      <div><div style="font-size:11px;color:#666" id="img-name"></div><div class="img-remove" onclick="removeImage()">Quitar imagen</div></div>
+    </div>
+    <div id="pos-controls-wrap" style="display:none">
+      <div class="position-hint">Arrastra el grabado sobre la tabla, o usa los controles:</div>
+      <div class="pos-controls">
+        <div class="pos-g"><label>Posicion horizontal</label><input type="range" id="pos-x" min="0" max="100" value="50" oninput="updateOverlay()"><span class="pos-val" id="lbl-px">centro</span></div>
+        <div class="pos-g"><label>Posicion vertical</label><input type="range" id="pos-y" min="0" max="100" value="50" oninput="updateOverlay()"><span class="pos-val" id="lbl-py">centro</span></div>
+      </div>
+      <div class="size-row">
+        <label>Tamano del grabado</label>
+        <input type="range" id="eng-size" min="20" max="100" value="60" oninput="updateOverlay()">
+        <span class="size-val" id="lbl-size">~6x6 cm</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="price-card" id="price-card">
+  <div id="price-out"><p class="empty-msg">Asigna al menos una madera para ver el precio</p></div>
+</div>
+</div>
+<div id="checkout" class="app" hidden></div><div class="wizard-bottom"><p id="validation" role="alert"></p><div class="bottom-row"><button class="secondary" id="back" onclick="go(step-1)" hidden>← Volver</button><div class="save-note"><span id="draft-status" role="status">Tu diseño se conserva en este navegador</span></div><button class="primary" id="next" onclick="advance()">Continuar con mi pedido →</button></div></div></div><section id="success" class="app" hidden></section></div><section id="orders" class="app" hidden></section><footer><span class="brand">RAÍZ & NUDO</span><span>Piezas únicas. Mesas con historia.</span><span>Prototipo · guardado local</span></footer>
+
+<script src="assets/configurator.js"></script>
+<script src="assets/business.js"></script>
+<script src="assets/storage.js"></script>
+<script src="assets/flow.js"></script>
+</body>
+</html>
