@@ -12,9 +12,9 @@ function message(order) {
   ['Diseño',({v:'Vertical',h:'Horizontal',b:'Ajedrez'})[d.mode]],['Medidas',`${d.largo} × ${d.ancho} × ${d.grosor} cm`],
   ['Distribución',d.grid.map(row=>row.join(' / ')).join('\n')],['Extras',d.extras.join(', ')||'Sin extras'],
   ['Grabado',d.engraving?`${d.engraving.sizeCm} cm; X ${d.engraving.x}%, Y ${d.engraving.y}%. Archivo disponible en admin.`:'Sin grabado'],
-  ['Entrega',e.method==='shipping'?'Envío a domicilio':'Recogida'],['Destino',`${e.city} ${e.zip||''} ${e.address||''}`],
+  ['Entrega',e.region?'Envío local · área metropolitana de Monterrey':e.method==='shipping'?'Envío a domicilio':'Recogida (pedido anterior)'],['Destino',`${e.city} · ${e.zone||''} · CP ${e.zip||''} · ${e.address||''}`],
   ['Producto',money(order.product_cents)],['Anticipo del 30%',money(order.deposit_cents)],
-  ['Envío',order.shipping_cents===null?'Por cotizar según destino':money(order.shipping_cents)],
+  ['Envío',order.shipping_cents===null?'Costo de envío local por confirmar según la zona':money(order.shipping_cents)],
   ['Fabricación','7 días naturales desde la recepción del anticipo'],['Estado',order.status]
  ];
  return {

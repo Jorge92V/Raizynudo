@@ -8,7 +8,7 @@ Diseño → datos del cliente → entrega → revisión → confirmación → fo
 
 - Anticipo del **30% del producto**, redondeado a centavos.
 - Fabricación en **7 días naturales desde el anticipo**; transporte aparte.
-- Envío según destino, confirmado antes de solicitar pago. Mientras falta cotizar se guarda `null`, no cero.
+- Envío local obligatorio, solo en el área metropolitana de Monterrey, con costo según la zona confirmado antes de solicitar pago. Mientras falta cotizar se guarda `null`, no cero.
 - Sin aprobación adicional del grabado ni flujo de cancelación.
 - PNG/JPG de grabado hasta 1.5 MB, con posición y tamaño dentro de la tabla.
 
@@ -121,3 +121,10 @@ Prueba de integración: `node --env-file=.env scripts/smoke-admin.mjs`. Usa un p
 Si `MAIL_FROM` está vacío, se utiliza `Raíz & Nudo <onboarding@resend.dev>`. Este modo gratuito de pruebas de Resend solo envía al correo propietario de la cuenta: debe ser `mike.valleg4@gmail.com`, que permanece como destinatario fijo. Para otros destinatarios se necesita un dominio remitente verificado. `MAIL_FROM` permite reemplazar el remitente sin cambiar código.
 
 `/version.json` identifica el commit publicado para comprobar si Netlify desplegó la versión más reciente. `ADMIN_SESSION_SECRET` debe configurarse como secreto en Netlify, nunca en el repositorio.
+
+
+## Cobertura de entrega
+
+Los pedidos nuevos solo aceptan `method: shipping`. El formulario exige municipio metropolitano, colonia/zona, código postal de Nuevo León y dirección. El envío local es obligatorio, tiene costo según la zona y permanece sin cotizar (`null`) hasta confirmarlo; no se anuncia como gratis ni se suma cero al total.
+
+La lista de municipios está centralizada en `assets/delivery.js`, compartida por navegador y servidor, y se puede ajustar a la cobertura operativa del taller. La validación de CP comprueba el rango de Nuevo León, no sustituye la revisión de correspondencia entre CP, colonia y municipio al cotizar. Los pedidos históricos conservan la modalidad y los datos con los que se recibieron; no se reescriben.

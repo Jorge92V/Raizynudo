@@ -9,7 +9,7 @@ const env={ADMIN_PASSWORD:randomBytes(24).toString('hex'),ADMIN_SESSION_SECRET:r
 const handler=admin.createAdminHandler(()=>sql,{env});
 const headers={host:'test.local',origin:'https://test.local','x-admin-request':'1','x-nf-client-connection-ip':'smoke-test'};
 const event=(action,method='GET',body={},params={})=>({httpMethod:method,headers,queryStringParameters:{action,...params},body:JSON.stringify(body)});
-const input={requestKey:key,client:{name:'PRUEBA ADMIN AUTOMATIZADA',phone:'5500000000',use:'Uso personal'},delivery:{method:'pickup',city:'Prueba'},design:{mode:'v',largo:40,ancho:30,grosor:3,vT:2,hT:1,grid:[['nogal','parota']],extras:[]}};
+const input={requestKey:key,client:{name:'PRUEBA ADMIN AUTOMATIZADA',phone:'5500000000',use:'Uso personal'},delivery:{method:'shipping',city:'Monterrey',zone:'Centro',zip:'64000',address:'Domicilio de prueba 123'},design:{mode:'v',largo:40,ancho:30,grosor:3,vT:2,hT:1,grid:[['nogal','parota']],extras:[]}};
 input.expectedAmountCents=orders.validate(input).productCents;
 try{
  assert.equal((await handler(event('list'))).statusCode,401);

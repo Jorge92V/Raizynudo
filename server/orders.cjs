@@ -1,3 +1,4 @@
+const { municipality } = require('../assets/delivery.js');
 const { randomUUID, createHash } = require('node:crypto');
 const prices = { nogal:147*1.16, tzalam:83.46*1.16, parota:78.45*1.16, fresno:72.41*1.16, encino:51.72*1.16 };
 const extras = { canal:30, agarra:50, grabado:50 };
@@ -32,10 +33,12 @@ function validate(input) {
   check(bytes.length<=1500000&&(g.image.startsWith('data:image/png')?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):bytes[0]===255&&bytes[1]===216&&bytes[2]===255),'Formato de imagen inválido');
   engraving={image:g.image,x,y,sizeCm};
  }
- check(['pickup','shipping'].includes(e.method),'Entrega inválida');
- const delivery={method:e.method,city:text(e.city,150),zip:text(e.zip||'',5),address:e.method==='shipping'?text(e.address,1000):'',shippingCost:e.method==='shipping'?null:0};
- check(delivery.city.length>=2,'Indica una ciudad');
- check(e.method!=='shipping'||(/^\d{5}$/.test(delivery.zip)&&delivery.address.length>=5),'Completa dirección y CP');
+ check(e.method==='shipping','Solo ofrecemos envío local en el área metropolitana de Monterrey');
+ const city=municipality(e.city);
+ check(city,'Solo entregamos en municipios del área metropolitana de Monterrey');
+ const delivery={method:'shipping',region:'Área metropolitana de Monterrey',state:'Nuevo León',city,zone:text(e.zone,150),zip:text(e.zip,5),address:text(e.address,1000),shippingCost:null};
+ check(delivery.zone.length>=2,'Indica la colonia o zona para cotizar el envío local');
+ check(/^6[4-7][0-9]{3}$/.test(delivery.zip)&&delivery.address.length>=5,'Completa una dirección y código postal de Nuevo León válidos');
  const design={mode:d.mode,largo,ancho,grosor,vT,hT,grid,extras:[...d.extras].sort(),engraving};
  const merma=d.mode==='b'?4:2,factor=d.mode==='b'?4.2:3.7;
  const unit=((grosor+.5)/2.54)*((ancho+merma)/hT/2.54)*((largo+merma)/vT/30.48)/12;
@@ -67,7 +70,7 @@ function createHandler(getSql, notify = async () => {}) { return async event=>{
    INSERT INTO raiz_nudo.email_notifications(order_id) SELECT id FROM saved
    ON CONFLICT (order_id) DO NOTHING RETURNING order_id
   ) SELECT id,folio,created_at,fingerprint,product_cents,deposit_cents,shipping_cents,status FROM saved`,
-  [id,o.requestKey,fingerprint,folio,JSON.stringify(o.client),JSON.stringify(o.delivery),JSON.stringify(o.design),JSON.stringify(o.pricing),o.productCents,o.depositCents,o.delivery.method==='shipping'?null:0]);
+  [id,o.requestKey,fingerprint,folio,JSON.stringify(o.client),JSON.stringify(o.delivery),JSON.stringify(o.design),JSON.stringify(o.pricing),o.productCents,o.depositCents,null]);
   const saved=rows[0];
   if(saved.fingerprint!==fingerprint)return response(409,{error:'Esta confirmación ya fue utilizada con otro diseño. Recarga e inténtalo de nuevo.'});
   try { await notify(sql,saved.id); } catch { console.error('notification_pending'); }

@@ -2,12 +2,12 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { randomUUID } = require('node:crypto');
 const { validate,createHandler }=require('../server/orders.cjs');
-const payload=()=>({requestKey:randomUUID(),client:{name:'Cliente prueba',phone:'5512345678',use:'Uso personal'},delivery:{method:'shipping',city:'Ciudad de México',zip:'01000',address:'Domicilio de prueba'},design:{mode:'v',largo:40,ancho:30,grosor:3,vT:2,hT:1,grid:[['nogal','parota']],extras:[]}});
+const payload=()=>({requestKey:randomUUID(),client:{name:'Cliente prueba',phone:'5512345678',use:'Uso personal'},delivery:{method:'shipping',city:'Monterrey',zone:'Centro',zip:'64000',address:'Domicilio de prueba'},design:{mode:'v',largo:40,ancho:30,grosor:3,vT:2,hT:1,grid:[['nogal','parota']],extras:[]}});
 const event=body=>({httpMethod:'POST',body:JSON.stringify(body)});
 test('servidor calcula precio, 30% y envío pendiente sin confiar en importes del cliente',()=>{
  const p=payload();p.amount=.01;const o=validate(p);
  assert.ok(o.productCents>100);assert.equal(o.depositCents,Math.round(o.productCents*.3));assert.equal(o.delivery.shippingCost,null);
- p.delivery.method='pickup';assert.equal(validate(p).delivery.shippingCost,0);
+ p.delivery.method='pickup';assert.throws(()=>validate(p),/Solo ofrecemos envío local/);
 });
 test('rechaza medidas, maderas, extras y entregas inválidas',()=>{
  for(const change of [p=>p.design.grid[0][0]='desconocida',p=>p.design.grid[0].pop(),p=>p.design.grosor=2.1,p=>{p.design.grosor=2;p.design.extras=['agarra']},p=>p.design.extras=['gratis'],p=>p.delivery.zip='123']){
@@ -34,4 +34,16 @@ test('el fallo del correo no impide confirmar un pedido guardado',async()=>{
  const p=payload();p.expectedAmountCents=validate(p).productCents;
  const handler=createHandler(()=>({query:async(q,args)=>[{id:args[0],folio:'RN-TEST',fingerprint:args[2],product_cents:p.expectedAmountCents,deposit_cents:Math.round(p.expectedAmountCents*.3),shipping_cents:null,status:'Recibido'}]}),async()=>{throw Error('mail unavailable')});
  const response=await handler(event(p));assert.equal(response.statusCode,200);assert.equal(JSON.parse(response.body).folio,'RN-TEST');
+});
+
+
+test('envío obligatorio, cobertura metropolitana y colonia requeridos',()=>{
+ const p=payload();const result=validate(p);
+ assert.equal(result.delivery.region,'Área metropolitana de Monterrey');
+ assert.equal(result.delivery.shippingCost,null);
+ p.delivery.city='Ciudad de México';assert.throws(()=>validate(p),/Solo entregamos/);
+ p.delivery.city='Linares';assert.throws(()=>validate(p),/Solo entregamos/);
+ p.delivery.city='san nicolas de los garza';assert.equal(validate(p).delivery.city,'San Nicolás de los Garza');
+ p.delivery.zip='01000';assert.throws(()=>validate(p),/código postal/);
+ p.delivery.zip='64000';p.delivery.zone='';assert.throws(()=>validate(p),/colonia/);
 });

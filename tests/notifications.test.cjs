@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const { message,deliverNotification,RECIPIENT }=require('../server/notifications.cjs');
 const order={folio:'RN-TEST',customer:{name:'<script>bad</script>',phone:'5512345678',use:'Un regalo'},design:{mode:'v',largo:40,ancho:30,grosor:3,grid:[['nogal','parota']],extras:[]},delivery:{method:'shipping',city:'Prueba'},product_cents:100000,deposit_cents:30000,shipping_cents:null,status:'Recibido'};
 test('aviso incluye cliente, diseño, anticipo, destino y envío pendiente; escapa HTML',()=>{
- const m=message(order);assert.ok(m.text.includes('30%'));assert.ok(m.text.includes('nogal / parota'));assert.ok(m.text.includes('Por cotizar'));assert.ok(m.text.includes('7 días naturales'));
+ const m=message(order);assert.ok(m.text.includes('30%'));assert.ok(m.text.includes('nogal / parota'));assert.ok(m.text.includes('según la zona'));assert.ok(m.text.includes('7 días naturales'));
  assert.ok(!m.html.includes('<script>'));assert.ok(m.html.includes('&lt;script&gt;'));
  assert.equal(RECIPIENT,'mike.valleg4@gmail.com');
 });

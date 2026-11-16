@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import api from '../server/orders.cjs';
 const sql=neon(process.env.DATABASE_URL),key=randomUUID();
-const input={requestKey:key,client:{name:'PRUEBA AUTOMATIZADA',phone:'5500000000',use:'Uso personal'},delivery:{method:'pickup',city:'Prueba'},design:{mode:'v',largo:40,ancho:30,grosor:3,vT:2,hT:1,grid:[['nogal','parota']],extras:[]}};
+const input={requestKey:key,client:{name:'PRUEBA AUTOMATIZADA',phone:'5500000000',use:'Uso personal'},delivery:{method:'shipping',city:'Monterrey',zone:'Centro',zip:'64000',address:'Domicilio de prueba 123'},design:{mode:'v',largo:40,ancho:30,grosor:3,vT:2,hT:1,grid:[['nogal','parota']],extras:[]}};
 input.expectedAmountCents=api.validate(input).productCents;
 try {
  const handler=api.createHandler(()=>sql),event={httpMethod:'POST',body:JSON.stringify(input)};
